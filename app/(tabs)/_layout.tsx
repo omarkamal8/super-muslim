@@ -1,10 +1,11 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColor } from '../../components/Themed';
+import { Platform } from 'react-native';
 
 export default function TabLayout() {
-  const tintColor = useThemeColor({ light: '#2E8B57', dark: '#98FB98' }, 'tint');
-
+  const tintColor = useThemeColor({ light: '#8B4513', dark: '#DEB887' }, 'tint');
+  
   return (
     <Tabs
       screenOptions={{
@@ -13,18 +14,25 @@ export default function TabLayout() {
           borderTopWidth: 0,
           elevation: 0,
           shadowOpacity: 0,
-          height: 60,
-          paddingBottom: 8,
+          height: Platform.OS === 'ios' ? 88 : 60,
+          paddingBottom: Platform.OS === 'ios' ? 28 : 8,
           paddingTop: 8,
+          backgroundColor: '#FFF8DC',
         },
         tabBarLabelStyle: {
           fontSize: 12,
-          fontWeight: '500',
+          fontWeight: '600',
+          fontFamily: Platform.OS === 'ios' ? 'Avenir-Medium' : 'sans-serif-medium',
         },
         headerStyle: {
           borderBottomWidth: 0,
           elevation: 0,
           shadowOpacity: 0,
+          backgroundColor: '#FFF8DC',
+        },
+        headerTitleStyle: {
+          fontFamily: Platform.OS === 'ios' ? 'Avenir-Heavy' : 'sans-serif-medium',
+          fontSize: 20,
         },
       }}>
       <Tabs.Screen

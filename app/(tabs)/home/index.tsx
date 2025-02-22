@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, TextInput, View as RNView } from 'react-native';
+import { StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, TextInput, View as RNView, Platform } from 'react-native';
 import { View, Text } from '../../../components/Themed';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 
 type Surah = {
   number: number;
@@ -60,7 +61,7 @@ export default function QuranScreen() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2E8B57" />
+        <ActivityIndicator size="large" color="#8B4513" />
         <Text style={styles.loadingText}>Loading Quran...</Text>
       </View>
     );
@@ -69,7 +70,7 @@ export default function QuranScreen() {
   if (error) {
     return (
       <View style={styles.errorContainer}>
-        <Ionicons name="alert-circle" size={48} color="#ef5350" />
+        <Ionicons name="alert-circle" size={48} color="#8B4513" />
         <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity style={styles.retryButton} onPress={fetchSurahs}>
           <Text style={styles.retryText}>Retry</Text>
@@ -80,29 +81,31 @@ export default function QuranScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <LinearGradient
+        colors={['rgba(139, 69, 19, 0.9)', 'rgba(139, 69, 19, 0.7)']}
+        style={styles.header}>
         <Image
-          source={{ uri: 'https://images.unsplash.com/photo-1584286595398-a59e7dfb7991?w=800' }}
+          source={{ uri: 'https://images.unsplash.com/photo-1591456983933-0c66ac26d936?w=800' }}
           style={styles.headerImage}
         />
         <View style={styles.headerOverlay}>
-          <Text style={styles.headerTitle}>Al-Quran</Text>
+          <Text style={styles.headerTitle}>Super Muslim</Text>
           <Text style={styles.headerSubtitle}>Read and Listen to the Holy Quran</Text>
         </View>
-      </View>
+      </LinearGradient>
 
       <RNView style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+        <Ionicons name="search" size={20} color="#8B4513" style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
           placeholder="Search surah by name or number..."
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholderTextColor="#999"
+          placeholderTextColor="#8B4513"
         />
         {searchQuery !== '' && (
           <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
-            <Ionicons name="close-circle" size={20} color="#666" />
+            <Ionicons name="close-circle" size={20} color="#8B4513" />
           </TouchableOpacity>
         )}
       </RNView>
@@ -114,8 +117,7 @@ export default function QuranScreen() {
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.surahItem}
-            onPress={() => navigateToSurah(item.number)}
-          >
+            onPress={() => navigateToSurah(item.number)}>
             <View style={styles.surahNumber}>
               <Text style={styles.numberText}>{item.number}</Text>
             </View>
@@ -129,13 +131,13 @@ export default function QuranScreen() {
                 <Text style={styles.verseBadgeText}>{item.numberOfAyahs}</Text>
                 <Text style={styles.verseBadgeLabel}>verses</Text>
               </RNView>
-              <Ionicons name="chevron-forward" size={20} color="#2E8B57" />
+              <Ionicons name="chevron-forward" size={20} color="#8B4513" />
             </View>
           </TouchableOpacity>
         )}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Ionicons name="search" size={48} color="#666" />
+            <Ionicons name="search" size={48} color="#8B4513" />
             <Text style={styles.emptyText}>No surahs found</Text>
           </View>
         }
@@ -147,34 +149,36 @@ export default function QuranScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#FFF8DC',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#FFF8DC',
   },
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#666',
+    color: '#8B4513',
+    fontFamily: Platform.OS === 'ios' ? 'Avenir' : 'sans-serif',
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#FFF8DC',
   },
   header: {
-    height: 200,
+    height: 250,
     width: '100%',
     position: 'relative',
   },
   headerImage: {
     width: '100%',
     height: '100%',
+    opacity: 0.5,
   },
   headerOverlay: {
     position: 'absolute',
@@ -182,25 +186,33 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'transparent',
   },
   headerTitle: {
-    fontSize: 36,
+    fontSize: 40,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#FFF8DC',
     marginBottom: 8,
+    fontFamily: Platform.OS === 'ios' ? 'Avenir-Heavy' : 'sans-serif-medium',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
   },
   headerSubtitle: {
     fontSize: 18,
-    color: '#fff',
+    color: '#FFF8DC',
     opacity: 0.9,
+    fontFamily: Platform.OS === 'ios' ? 'Avenir' : 'sans-serif',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#FAEBD7',
     margin: 16,
     paddingHorizontal: 16,
     borderRadius: 12,
@@ -220,7 +232,8 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: '#333',
+    color: '#2D1810',
+    fontFamily: Platform.OS === 'ios' ? 'Avenir' : 'sans-serif',
   },
   clearButton: {
     padding: 4,
@@ -230,8 +243,8 @@ const styles = StyleSheet.create({
   },
   surahItem: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: '#FAEBD7',
+    borderRadius: 16,
     padding: 16,
     marginBottom: 12,
     alignItems: 'center',
@@ -248,15 +261,16 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2E8B57',
+    backgroundColor: '#8B4513',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
   },
   numberText: {
-    color: '#fff',
+    color: '#FFF8DC',
     fontWeight: 'bold',
     fontSize: 16,
+    fontFamily: Platform.OS === 'ios' ? 'Avenir-Heavy' : 'sans-serif-medium',
   },
   surahInfo: {
     flex: 1,
@@ -265,35 +279,40 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 4,
-    color: '#333',
+    color: '#2D1810',
+    fontFamily: Platform.OS === 'ios' ? 'Avenir-Heavy' : 'sans-serif-medium',
   },
   surahEnglishName: {
     fontSize: 16,
-    color: '#666',
+    color: '#8B4513',
     marginBottom: 2,
+    fontFamily: Platform.OS === 'ios' ? 'Avenir-Medium' : 'sans-serif',
   },
   surahTranslation: {
     fontSize: 14,
-    color: '#999',
+    color: '#666',
+    fontFamily: Platform.OS === 'ios' ? 'Avenir' : 'sans-serif-light',
   },
   surahMeta: {
     alignItems: 'flex-end',
   },
   verseBadge: {
-    backgroundColor: '#e8f5e9',
+    backgroundColor: '#8B4513',
     borderRadius: 12,
     padding: 8,
     alignItems: 'center',
     marginBottom: 8,
   },
   verseBadgeText: {
-    color: '#2E8B57',
+    color: '#FFF8DC',
     fontWeight: 'bold',
     fontSize: 16,
+    fontFamily: Platform.OS === 'ios' ? 'Avenir-Heavy' : 'sans-serif-medium',
   },
   verseBadgeLabel: {
-    color: '#2E8B57',
+    color: '#FFF8DC',
     fontSize: 12,
+    fontFamily: Platform.OS === 'ios' ? 'Avenir' : 'sans-serif',
   },
   emptyContainer: {
     alignItems: 'center',
@@ -302,23 +321,26 @@ const styles = StyleSheet.create({
   emptyText: {
     marginTop: 12,
     fontSize: 16,
-    color: '#666',
+    color: '#8B4513',
+    fontFamily: Platform.OS === 'ios' ? 'Avenir' : 'sans-serif',
   },
   errorText: {
-    color: '#ef5350',
+    color: '#8B4513',
     fontSize: 16,
     textAlign: 'center',
     marginVertical: 16,
+    fontFamily: Platform.OS === 'ios' ? 'Avenir' : 'sans-serif',
   },
   retryButton: {
-    backgroundColor: '#2E8B57',
+    backgroundColor: '#8B4513',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
   },
   retryText: {
-    color: '#fff',
+    color: '#FFF8DC',
     fontWeight: 'bold',
     fontSize: 16,
+    fontFamily: Platform.OS === 'ios' ? 'Avenir-Heavy' : 'sans-serif-medium',
   },
 });
