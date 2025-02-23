@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
-import { StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, TextInput, View as RNView, Platform } from 'react-native';
+import { StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
 import { View, Text } from '../../../components/Themed';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 
 type Surah = {
   number: number;
@@ -15,7 +14,6 @@ type Surah = {
 
 export default function QuranScreen() {
   const [surahs, setSurahs] = useState<Surah[]>([]);
-  const [filteredSurahs, setFilteredSurahs] = useState<Surah[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -25,25 +23,12 @@ export default function QuranScreen() {
     fetchSurahs();
   }, []);
 
-  useEffect(() => {
-    if (surahs.length > 0) {
-      const filtered = surahs.filter(
-        surah =>
-          surah.englishName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          surah.englishNameTranslation.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          surah.number.toString().includes(searchQuery)
-      );
-      setFilteredSurahs(filtered);
-    }
-  }, [searchQuery, surahs]);
-
   const fetchSurahs = async () => {
     try {
       const response = await fetch('https://api.alquran.cloud/v1/surah');
       const data = await response.json();
       if (data.code === 200) {
         setSurahs(data.data);
-        setFilteredSurahs(data.data);
       } else {
         setError('Failed to load Quran data');
       }
@@ -55,22 +40,29 @@ export default function QuranScreen() {
   };
 
   const navigateToSurah = (surahNumber: number) => {
-    router.push(`/home/surah/${surahNumber}`);
+    router.push(`/(tabs)/home/${surahNumber}`);
   };
+
+  // Filter surahs based on search query
+  const filteredSurahs = surahs.filter((surah) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      surah.name.toLowerCase().includes(query) ||
+      surah.englishName.toLowerCase().includes(query)
+    );
+  });
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#8B4513" />
-        <Text style={styles.loadingText}>Loading Quran...</Text>
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#2E8B57" />
       </View>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.errorContainer}>
-        <Ionicons name="alert-circle" size={48} color="#8B4513" />
+      <View style={styles.container}>
         <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity style={styles.retryButton} onPress={fetchSurahs}>
           <Text style={styles.retryText}>Retry</Text>
@@ -81,43 +73,33 @@ export default function QuranScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={['rgba(139, 69, 19, 0.9)', 'rgba(139, 69, 19, 0.7)']}
-        style={styles.header}>
+      <View style={styles.header}>
         <Image
-          source={{ uri: 'https://images.unsplash.com/photo-1591456983933-0c66ac26d936?w=800' }}
+          source={{ uri: 'https://images.unsplash.com/photo-1584286595398-a59e7dfb7991?w=800' }}
           style={styles.headerImage}
         />
         <View style={styles.headerOverlay}>
-          <Text style={styles.headerTitle}>Super Muslim</Text>
+          <Text style={styles.headerTitle}>Al-Quran</Text>
           <Text style={styles.headerSubtitle}>Read and Listen to the Holy Quran</Text>
         </View>
-      </LinearGradient>
-
-      <RNView style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color="#8B4513" style={styles.searchIcon} />
+      </View>
+      <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
-          placeholder="Search surah by name or number..."
+          placeholder="Search Surahs..."
+          placeholderTextColor="#999"
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholderTextColor="#8B4513"
         />
-        {searchQuery !== '' && (
-          <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
-            <Ionicons name="close-circle" size={20} color="#8B4513" />
-          </TouchableOpacity>
-        )}
-      </RNView>
-
+      </View>
       <FlatList
         data={filteredSurahs}
         keyExtractor={(item) => item.number.toString()}
-        contentContainerStyle={styles.listContainer}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.surahItem}
-            onPress={() => navigateToSurah(item.number)}>
+            onPress={() => navigateToSurah(item.number)}
+          >
             <View style={styles.surahNumber}>
               <Text style={styles.numberText}>{item.number}</Text>
             </View>
@@ -127,20 +109,11 @@ export default function QuranScreen() {
               <Text style={styles.surahTranslation}>{item.englishNameTranslation}</Text>
             </View>
             <View style={styles.surahMeta}>
-              <RNView style={styles.verseBadge}>
-                <Text style={styles.verseBadgeText}>{item.numberOfAyahs}</Text>
-                <Text style={styles.verseBadgeLabel}>verses</Text>
-              </RNView>
-              <Ionicons name="chevron-forward" size={20} color="#8B4513" />
+              <Text style={styles.ayahCount}>{item.numberOfAyahs} verses</Text>
+              <Ionicons name="chevron-forward" size={20} color="#666" />
             </View>
           </TouchableOpacity>
         )}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Ionicons name="search" size={48} color="#8B4513" />
-            <Text style={styles.emptyText}>No surahs found</Text>
-          </View>
-        }
       />
     </View>
   );
@@ -149,36 +122,15 @@ export default function QuranScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF8DC',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#FFF8DC',
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: '#8B4513',
-    fontFamily: Platform.OS === 'ios' ? 'Avenir' : 'sans-serif',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#FFF8DC',
   },
   header: {
-    height: 250,
+    height: 200,
     width: '100%',
     position: 'relative',
   },
   headerImage: {
     width: '100%',
     height: '100%',
-    opacity: 0.5,
   },
   headerOverlay: {
     position: 'absolute',
@@ -186,161 +138,91 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'transparent',
   },
   headerTitle: {
-    fontSize: 40,
+    fontSize: 32,
     fontWeight: 'bold',
-    color: '#FFF8DC',
+    color: '#fff',
     marginBottom: 8,
-    fontFamily: Platform.OS === 'ios' ? 'Avenir-Heavy' : 'sans-serif-medium',
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: -1, height: 1 },
-    textShadowRadius: 10,
   },
   headerSubtitle: {
-    fontSize: 18,
-    color: '#FFF8DC',
-    opacity: 0.9,
-    fontFamily: Platform.OS === 'ios' ? 'Avenir' : 'sans-serif',
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: -1, height: 1 },
-    textShadowRadius: 10,
+    fontSize: 16,
+    color: '#fff',
+    opacity: 0.8,
   },
   searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FAEBD7',
-    margin: 16,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    height: 50,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  searchIcon: {
-    marginRight: 12,
+    padding: 10,
+    backgroundColor: '#f2f2f2',
   },
   searchInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#2D1810',
-    fontFamily: Platform.OS === 'ios' ? 'Avenir' : 'sans-serif',
-  },
-  clearButton: {
-    padding: 4,
-  },
-  listContainer: {
-    padding: 16,
+    height: 40,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    borderColor: '#ddd',
+    borderWidth: 1,
   },
   surahItem: {
     flexDirection: 'row',
-    backgroundColor: '#FAEBD7',
-    borderRadius: 16,
     padding: 16,
-    marginBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   surahNumber: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#8B4513',
+    backgroundColor: '#2E8B57',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
   },
   numberText: {
-    color: '#FFF8DC',
+    color: '#fff',
     fontWeight: 'bold',
-    fontSize: 16,
-    fontFamily: Platform.OS === 'ios' ? 'Avenir-Heavy' : 'sans-serif-medium',
   },
   surahInfo: {
     flex: 1,
   },
   surahName: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 4,
-    color: '#2D1810',
-    fontFamily: Platform.OS === 'ios' ? 'Avenir-Heavy' : 'sans-serif-medium',
   },
   surahEnglishName: {
     fontSize: 16,
-    color: '#8B4513',
+    color: '#666',
     marginBottom: 2,
-    fontFamily: Platform.OS === 'ios' ? 'Avenir-Medium' : 'sans-serif',
   },
   surahTranslation: {
     fontSize: 14,
-    color: '#666',
-    fontFamily: Platform.OS === 'ios' ? 'Avenir' : 'sans-serif-light',
+    color: '#999',
   },
   surahMeta: {
     alignItems: 'flex-end',
   },
-  verseBadge: {
-    backgroundColor: '#8B4513',
-    borderRadius: 12,
-    padding: 8,
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  verseBadgeText: {
-    color: '#FFF8DC',
-    fontWeight: 'bold',
-    fontSize: 16,
-    fontFamily: Platform.OS === 'ios' ? 'Avenir-Heavy' : 'sans-serif-medium',
-  },
-  verseBadgeLabel: {
-    color: '#FFF8DC',
+  ayahCount: {
     fontSize: 12,
-    fontFamily: Platform.OS === 'ios' ? 'Avenir' : 'sans-serif',
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    padding: 20,
-  },
-  emptyText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: '#8B4513',
-    fontFamily: Platform.OS === 'ios' ? 'Avenir' : 'sans-serif',
+    color: '#666',
+    marginBottom: 4,
   },
   errorText: {
-    color: '#8B4513',
-    fontSize: 16,
+    color: 'red',
     textAlign: 'center',
-    marginVertical: 16,
-    fontFamily: Platform.OS === 'ios' ? 'Avenir' : 'sans-serif',
+    marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#8B4513',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
+    backgroundColor: '#2E8B57',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
     borderRadius: 8,
   },
   retryText: {
-    color: '#FFF8DC',
+    color: '#fff',
     fontWeight: 'bold',
-    fontSize: 16,
-    fontFamily: Platform.OS === 'ios' ? 'Avenir-Heavy' : 'sans-serif-medium',
   },
 });
