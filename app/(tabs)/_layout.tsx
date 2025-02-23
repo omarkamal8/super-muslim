@@ -42,6 +42,16 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="qibla"
+        options={{
+          title: 'Qibla',
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="compass" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="prayer-times"
         options={{
           title: 'Prayer Times',
