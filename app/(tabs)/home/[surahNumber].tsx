@@ -428,7 +428,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    height: 200,
+    height: 280,
     width: '100%',
     position: 'relative',
   },
@@ -452,6 +452,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 8,
+    marginTop: 20,
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
