@@ -38,17 +38,17 @@ export function View(props: ViewProps) {
 
 const Colors = {
   light: {
-    text: '#2D1810',
-    background: '#FFF8DC',
-    tint: '#8B4513',
-    tabIconDefault: '#ccc',
-    tabIconSelected: '#8B4513',
+    text: '#1A1A1A',
+    background: '#FFFFFF',
+    tint: '#1DB954',
+    tabIconDefault: '#B3B3B3',
+    tabIconSelected: '#1DB954',
   },
   dark: {
-    text: '#F5F5DC',
-    background: '#2D1810',
-    tint: '#DEB887',
-    tabIconDefault: '#ccc',
-    tabIconSelected: '#DEB887',
+    text: '#FFFFFF',
+    background: '#121212',
+    tint: '#1DB954',
+    tabIconDefault: '#B3B3B3',
+    tabIconSelected: '#1DB954',
   },
 };
