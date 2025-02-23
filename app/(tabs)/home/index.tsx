@@ -86,7 +86,7 @@ export default function QuranScreen() {
           blurRadius={2}
         />
         <View style={[styles.headerOverlay, { backgroundColor: 'transparent' }]}>
-          <Text style={styles.headerTitle}>Al-Quran</Text>
+          <Text style={styles.headerTitle}>Super Muslim</Text>
           <Text style={styles.headerSubtitle}>Read and Listen to the Holy Quran</Text>
         </View>
       </LinearGradient>
