@@ -3,7 +3,7 @@ import { StyleSheet, Platform, TouchableOpacity, useColorScheme } from 'react-na
 import { View, Text } from '../../components/Themed';
 import { Magnetometer } from 'expo-sensors';
 import * as Location from 'expo-location';
-import Svg, { Path, Circle, Line } from 'react-native-svg';
+import Svg, { Path, Circle, Line, G } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -11,6 +11,33 @@ const MECCA_COORDS = {
   latitude: 21.422487,
   longitude: 39.826206,
 };
+
+// Ka'ba icon SVG path
+const KaabaIcon = ({ color }: { color: string }) => (
+  <G>
+    {/* Base structure */}
+    <Path
+      d="M-15 0 L15 0 L15 -30 L-15 -30 Z"
+      fill={color}
+      stroke={color}
+      strokeWidth="2"
+    />
+    {/* Door */}
+    <Path
+      d="M-5 0 L5 0 L5 -15 L-5 -15 Z"
+      fill="none"
+      stroke={color}
+      strokeWidth="1"
+    />
+    {/* Kiswah pattern */}
+    <Path
+      d="M-15 -10 L15 -10 M-15 -20 L15 -20"
+      stroke={color}
+      strokeWidth="1"
+      opacity="0.5"
+    />
+  </G>
+);
 
 export default function QiblaScreen() {
   const [magnetometer, setMagnetometer] = useState(0);
@@ -140,9 +167,13 @@ export default function QiblaScreen() {
           <Text x="270" y="155" fill={isDark ? '#666' : '#CCC'} fontSize="16" textAnchor="middle">E</Text>
         </Svg>
 
-        {/* Qibla Direction Indicator */}
+        {/* Qibla Direction Indicator with Ka'ba */}
         <View style={[styles.qiblaIndicator, { transform: [{ rotate: `${qiblaRotation}deg` }] }]}>
-          <Ionicons name="location" size={40} color={accentColor} />
+          <Svg height="60" width="60" style={styles.kaabaIcon}>
+            <G transform="translate(30, 45)">
+              <KaabaIcon color={accentColor} />
+            </G>
+          </Svg>
         </View>
       </View>
 
@@ -201,6 +232,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  kaabaIcon: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   infoContainer: {
     margin: 20,
