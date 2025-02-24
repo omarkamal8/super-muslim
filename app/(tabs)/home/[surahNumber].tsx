@@ -10,6 +10,7 @@ type Verse = {
   number: number;
   text: string;
   translation: string;
+  transliteration: string;
   audio: string;
 };
 
@@ -81,21 +82,24 @@ export default function SurahDetailScreen() {
 
   const fetchSurahDetails = async () => {
     try {
-      const textResponse = await fetch(
-        `https://api.alquran.cloud/v1/surah/${surahNumber}`
-      );
-      const textData = await textResponse.json();
+      const [textResponse, translationResponse, transliterationResponse] = await Promise.all([
+        fetch(`https://api.alquran.cloud/v1/surah/${surahNumber}`),
+        fetch(`https://api.alquran.cloud/v1/surah/${surahNumber}/en.asad`),
+        fetch(`https://api.alquran.cloud/v1/surah/${surahNumber}/en.transliteration`)
+      ]);
 
-      const translationResponse = await fetch(
-        `https://api.alquran.cloud/v1/surah/${surahNumber}/en.asad`
-      );
-      const translationData = await translationResponse.json();
+      const [textData, translationData, transliterationData] = await Promise.all([
+        textResponse.json(),
+        translationResponse.json(),
+        transliterationResponse.json()
+      ]);
 
-      if (textData.code === 200 && translationData.code === 200) {
+      if (textData.code === 200 && translationData.code === 200 && transliterationData.code === 200) {
         const verses = textData.data.ayahs.map((ayah: any, index: number) => ({
           number: ayah.numberInSurah,
           text: ayah.text,
           translation: translationData.data.ayahs[index].text,
+          transliteration: transliterationData.data.ayahs[index].text,
           audio: `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${ayah.number}.mp3`,
         }));
 
@@ -378,14 +382,19 @@ export default function SurahDetailScreen() {
             ]}>
               {verse.text}
             </Text>
-            
+
             {!showArabicOnly && (
-              <Text style={[
-                styles.translationText,
-                { color: isDark ? '#B3B3B3' : '#666666' }
-              ]}>
-                {verse.translation}
-              </Text>
+              <>
+                <Text style={styles.transliterationText}>
+                  {verse.transliteration}
+                </Text>
+                <Text style={[
+                  styles.translationText,
+                  { color: isDark ? '#B3B3B3' : '#666666' }
+                ]}>
+                  {verse.translation}
+                </Text>
+              </>
             )}
           </View>
         ))}
@@ -512,6 +521,14 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     fontFamily: 'System',
     marginBottom: 16,
+  },
+  transliterationText: {
+    fontSize: 18,
+    lineHeight: 28,
+    color: '#1DB954',
+    marginBottom: 12,
+    textAlign: 'left',
+    fontStyle: 'italic',
   },
   translationText: {
     fontSize: 16,
