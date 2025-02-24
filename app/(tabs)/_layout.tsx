@@ -1,6 +1,5 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useThemeColor } from '../../components/Themed';
 import { useColorScheme } from 'react-native';
 
 export default function TabLayout() {
@@ -19,7 +18,7 @@ export default function TabLayout() {
           borderTopWidth: 0,
           elevation: 0,
           shadowOpacity: 0,
-          height: 80,
+          height: 60,
           paddingBottom: 8,
           paddingTop: 8,
         },
@@ -57,6 +56,16 @@ export default function TabLayout() {
           title: 'Prayer Times',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="time" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="azkar"
+        options={{
+          title: 'Azkar',
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="heart" size={size} color={color} />
           ),
         }}
       />
