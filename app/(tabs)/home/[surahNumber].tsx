@@ -9,10 +9,11 @@ import {
   useColorScheme
 } from 'react-native';
 import { View, Text } from '../../../components/Themed';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
 import { LinearGradient } from 'expo-linear-gradient';
+import StickyAudioPlayer from '../../../components/StickyAudioPlayer';
 
 type Verse = {
   number: number;
@@ -34,6 +35,7 @@ type SurahDetail = {
 
 export default function SurahDetailScreen() {
   const { surahNumber } = useLocalSearchParams();
+  const router = useRouter();
   const [surah, setSurah] = useState<SurahDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,6 +47,7 @@ export default function SurahDetailScreen() {
   const webAudioRef = useRef<HTMLAudioElement | null>(null);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const [fullSurahAudioUrl, setFullSurahAudioUrl] = useState<string>('');
 
   useEffect(() => {
     initializeAudio();
@@ -115,7 +118,7 @@ export default function SurahDetailScreen() {
           audio: `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${ayah.number}.mp3`,
         }));
 
-        setSurah({
+        const surahData = {
           number: textData.data.number,
           name: textData.data.name,
           englishName: textData.data.englishName,
@@ -123,7 +126,10 @@ export default function SurahDetailScreen() {
           numberOfAyahs: textData.data.numberOfAyahs,
           revelationType: textData.data.revelationType,
           verses,
-        });
+        };
+
+        setSurah(surahData);
+        setFullSurahAudioUrl(`https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/${surahData.number}.mp3`);
       } else {
         setError('Failed to load surah data');
       }
@@ -211,76 +217,21 @@ export default function SurahDetailScreen() {
 
   const playFullSurahAudio = async () => {
     if (!surah) return;
-    try {
-      setAudioError(null);
-      await cleanupAudio();
-      const fullAudioUrl = `https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/${surah.number}.mp3`;
-      
-      if (Platform.OS === 'web') {
-        const audio = new Audio();
-        audio.src = fullAudioUrl;
-        audio.onerror = () => {
-          console.warn('Web full surah audio error:', audio.error);
-          setAudioError('Failed to play full surah audio. Please try again.');
-          setIsFullSurahPlaying(false);
-        };
-        audio.onended = () => {
-          setIsFullSurahPlaying(false);
-        };
-        audio.oncanplaythrough = async () => {
-          try {
-            await audio.play();
-            webAudioRef.current = audio;
-            setIsFullSurahPlaying(true);
-          } catch (error) {
-            console.warn('Web full surah audio play error:', error);
-            setAudioError('Failed to play full surah audio. Please try again.');
-            setIsFullSurahPlaying(false);
-          }
-        };
-        audio.load();
-      } else {
-        const { sound: newSound } = await Audio.Sound.createAsync(
-          { uri: fullAudioUrl },
-          { shouldPlay: true },
-          (status) => {
-            if (status.error) {
-              setAudioError('Failed to play full surah audio. Please try again.');
-              setIsFullSurahPlaying(false);
-            }
-            if (status.didJustFinish) {
-              setIsFullSurahPlaying(false);
-            }
-          }
-        );
-        setSound(newSound);
-        setIsFullSurahPlaying(true);
-      }
-    } catch (error) {
-      console.warn('Full surah audio playback error:', error);
-      setAudioError('Failed to play full surah audio. Please try again.');
-      setIsFullSurahPlaying(false);
-    }
+    
+    // Stop any currently playing verse audio
+    await cleanupAudio();
+    
+    // Set the full surah as playing
+    setIsFullSurahPlaying(true);
   };
 
-  const pauseFullSurahAudio = async () => {
-    try {
-      if (Platform.OS === 'web') {
-        if (webAudioRef.current) {
-          webAudioRef.current.pause();
-        }
-      } else if (sound) {
-        await sound.pauseAsync();
-      }
-      setIsFullSurahPlaying(false);
-    } catch (error) {
-      console.warn('Error pausing full surah audio:', error);
-    }
+  const stopFullSurahAudio = () => {
+    setIsFullSurahPlaying(false);
   };
 
   const toggleFullSurahAudio = async () => {
     if (isFullSurahPlaying) {
-      await pauseFullSurahAudio();
+      stopFullSurahAudio();
     } else {
       await playFullSurahAudio();
     }
@@ -313,111 +264,128 @@ export default function SurahDetailScreen() {
     .join(' ');
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#121212' : '#FFFFFF' }]}>
-      <LinearGradient
-        colors={isDark ? ['#1DB954', '#121212'] : ['#1DB954', '#FFFFFF']}
-        style={styles.header}
-      >
-        <Image
-          source={{ uri: 'https://images.unsplash.com/photo-1597935258735-e254c1839512?w=800' }}
-          style={styles.headerImage}
-          blurRadius={2}
-        />
-        <View style={[styles.headerOverlay, { backgroundColor: 'transparent' }]}>
-          <Text style={styles.headerTitle}>{surah.name}</Text>
-          <Text style={styles.headerSubtitle}>{surah.englishName}</Text>
-          <Text style={styles.headerInfo}>
-            {surah.numberOfAyahs} Verses • {surah.revelationType}
-          </Text>
-        </View>
-      </LinearGradient>
-
-      <View style={[styles.controlsContainer, { backgroundColor: isDark ? '#282828' : '#F8F8F8' }]}>
-        <TouchableOpacity
-          onPress={toggleFullSurahAudio}
-          style={[styles.controlButton, { backgroundColor: '#1DB954' }]}
+    <>
+      <ScrollView style={[styles.container, { backgroundColor: isDark ? '#121212' : '#FFFFFF' }]}>
+        <LinearGradient
+          colors={isDark ? ['#1DB954', '#121212'] : ['#1DB954', '#FFFFFF']}
+          style={styles.header}
         >
-          <Ionicons
-            name={isFullSurahPlaying ? 'pause' : 'play'}
-            size={24}
-            color="#FFFFFF"
+          <Image
+            source={{ uri: 'https://images.unsplash.com/photo-1597935258735-e254c1839512?w=800' }}
+            style={styles.headerImage}
+            blurRadius={2}
           />
-          <Text style={styles.controlButtonText}>
-            {isFullSurahPlaying ? 'Pause Full Surah' : 'Play Full Surah'}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={toggleArabicOnly}
-          style={[
-            styles.controlButton,
-            { backgroundColor: showArabicOnly ? '#1DB954' : isDark ? '#383838' : '#EEEEEE' }
-          ]}
-        >
-          <Ionicons
-            name={showArabicOnly ? 'text' : 'text-outline'}
-            size={24}
-            color={showArabicOnly ? '#FFFFFF' : '#1DB954'}
-          />
-          <Text style={[styles.controlButtonText, { color: showArabicOnly ? '#FFFFFF' : '#1DB954' }]}>
-            Arabic Only
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {audioError && (
-        <View style={styles.audioErrorContainer}>
-          <Text style={styles.audioErrorText}>{audioError}</Text>
-        </View>
-      )}
-
-      {showArabicOnly ? (
-        <View style={styles.arabicOnlyContainer}>
-          <Text style={[styles.arabicOnlyText, { color: isDark ? '#FFFFFF' : '#1A1A1A' }]}>
-            {arabicOnlyText}
-          </Text>
-        </View>
-      ) : (
-        <View style={styles.versesContainer}>
-          {surah.verses.map((verse) => (
-            <View
-              key={verse.number}
-              style={[
-                styles.verseCard,
-                { backgroundColor: isDark ? '#282828' : '#F8F8F8' }
-              ]}
+          <View style={[styles.headerOverlay, { backgroundColor: 'transparent' }]}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.back()}
             >
-              <View style={styles.verseHeader}>
-                <View style={[styles.verseNumber, { backgroundColor: '#1DB954' }]}>
-                  <Text style={styles.numberText}>{verse.number}</Text>
-                </View>
-                <TouchableOpacity
-                  onPress={() => toggleAudio(verse)}
-                  style={styles.audioButton}
-                >
-                  <Ionicons
-                    name={playingVerse === verse.number ? 'pause' : 'play'}
-                    size={24}
-                    color="#1DB954"
-                  />
-                </TouchableOpacity>
-              </View>
-              
-              <Text style={[styles.arabicText, { color: isDark ? '#FFFFFF' : '#1A1A1A' }]}>
-                {verse.text}
-              </Text>
+              <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>{surah.name}</Text>
+            <Text style={styles.headerSubtitle}>{surah.englishName}</Text>
+            <Text style={styles.headerInfo}>
+              {surah.numberOfAyahs} Verses • {surah.revelationType}
+            </Text>
+          </View>
+        </LinearGradient>
 
-              <Text style={styles.transliterationText}>
-                {verse.transliteration}
-              </Text>
-              <Text style={[styles.translationText, { color: isDark ? '#B3B3B3' : '#666666' }]}>
-                {verse.translation}
-              </Text>
-            </View>
-          ))}
+        <View style={[styles.controlsContainer, { backgroundColor: isDark ? '#282828' : '#F8F8F8' }]}>
+          <TouchableOpacity
+            onPress={toggleFullSurahAudio}
+            style={[styles.controlButton, { backgroundColor: '#1DB954' }]}
+          >
+            <Ionicons
+              name={isFullSurahPlaying ? 'pause' : 'play'}
+              size={24}
+              color="#FFFFFF"
+            />
+            <Text style={styles.controlButtonText}>
+              {isFullSurahPlaying ? 'Pause Full Surah' : 'Play Full Surah'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={toggleArabicOnly}
+            style={[
+              styles.controlButton,
+              { backgroundColor: showArabicOnly ? '#1DB954' : isDark ? '#383838' : '#EEEEEE' }
+            ]}
+          >
+            <Ionicons
+              name={showArabicOnly ? 'text' : 'text-outline'}
+              size={24}
+              color={showArabicOnly ? '#FFFFFF' : '#1DB954'}
+            />
+            <Text style={[styles.controlButtonText, { color: showArabicOnly ? '#FFFFFF' : '#1DB954' }]}>
+              Arabic Only
+            </Text>
+          </TouchableOpacity>
         </View>
-      )}
-    </ScrollView>
+
+        {audioError && (
+          <View style={styles.audioErrorContainer}>
+            <Text style={styles.audioErrorText}>{audioError}</Text>
+          </View>
+        )}
+
+        {showArabicOnly ? (
+          <View style={styles.arabicOnlyContainer}>
+            <Text style={[styles.arabicOnlyText, { color: isDark ? '#FFFFFF' : '#1A1A1A' }]}>
+              {arabicOnlyText}
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.versesContainer}>
+            {surah.verses.map((verse) => (
+              <View
+                key={verse.number}
+                style={[
+                  styles.verseCard,
+                  { backgroundColor: isDark ? '#282828' : '#F8F8F8' }
+                ]}
+              >
+                <View style={styles.verseHeader}>
+                  <View style={[styles.verseNumber, { backgroundColor: '#1DB954' }]}>
+                    <Text style={styles.numberText}>{verse.number}</Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => toggleAudio(verse)}
+                    style={styles.audioButton}
+                  >
+                    <Ionicons
+                      name={playingVerse === verse.number ? 'pause' : 'play'}
+                      size={24}
+                      color="#1DB954"
+                    />
+                  </TouchableOpacity>
+                </View>
+                
+                <Text style={[styles.arabicText, { color: isDark ? '#FFFFFF' : '#1A1A1A' }]}>
+                  {verse.text}
+                </Text>
+
+                <Text style={styles.transliterationText}>
+                  {verse.transliteration}
+                </Text>
+                <Text style={[styles.translationText, { color: isDark ? '#B3B3B3' : '#666666' }]}>
+                  {verse.translation}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+      </ScrollView>
+
+      {/* Sticky Audio Player */}
+      <StickyAudioPlayer
+        isVisible={isFullSurahPlaying}
+        audioUrl={fullSurahAudioUrl}
+        title={`${surah.englishName} (${surah.name})`}
+        subtitle={`Complete Surah • ${surah.numberOfAyahs} Verses`}
+        onClose={stopFullSurahAudio}
+      />
+    </>
   );
 }
 
@@ -444,6 +412,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+  },
+  backButton: {
+    position: 'absolute',
+    top: 40,
+    left: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerTitle: {
     fontSize: 32,
