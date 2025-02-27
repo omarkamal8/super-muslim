@@ -6,7 +6,8 @@ import {
   Animated,
   Dimensions,
   View as RNView,
-  useColorScheme
+  useColorScheme,
+  Switch
 } from 'react-native';
 import { Text } from './Themed';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,10 +24,16 @@ export default function GlobalAudioPlayer() {
     position,
     isBuffering,
     error,
+    autoPlayEnabled,
     pauseAudio,
     resumeAudio,
     stopAudio,
-    seekTo
+    seekTo,
+    playNextSurah,
+    playPreviousSurah,
+    toggleAutoPlay,
+    isFirstSurah,
+    isLastSurah
   } = useAudioPlayer();
   
   const slideAnim = React.useRef(new Animated.Value(100)).current;
@@ -118,7 +125,19 @@ export default function GlobalAudioPlayer() {
             </TouchableOpacity>
           </RNView>
 
-          <RNView style={styles.controlsContainer}>
+          <RNView style={styles.navigationContainer}>
+            <TouchableOpacity 
+              onPress={playPreviousSurah} 
+              style={[styles.navButton, isFirstSurah && styles.disabledButton]}
+              disabled={isFirstSurah}
+            >
+              <Ionicons
+                name="play-skip-back"
+                size={24}
+                color={isFirstSurah ? (isDark ? '#555555' : '#CCCCCC') : '#1DB954'}
+              />
+            </TouchableOpacity>
+
             <TouchableOpacity onPress={togglePlayback} style={styles.playButton}>
               <Ionicons
                 name={isPlaying ? 'pause-circle' : 'play-circle'}
@@ -127,6 +146,20 @@ export default function GlobalAudioPlayer() {
               />
             </TouchableOpacity>
 
+            <TouchableOpacity 
+              onPress={playNextSurah} 
+              style={[styles.navButton, isLastSurah && styles.disabledButton]}
+              disabled={isLastSurah}
+            >
+              <Ionicons
+                name="play-skip-forward"
+                size={24}
+                color={isLastSurah ? (isDark ? '#555555' : '#CCCCCC') : '#1DB954'}
+              />
+            </TouchableOpacity>
+          </RNView>
+
+          <RNView style={styles.controlsContainer}>
             <RNView style={styles.progressContainer}>
               <Slider
                 value={duration > 0 ? position / duration : 0}
@@ -150,6 +183,20 @@ export default function GlobalAudioPlayer() {
             {isBuffering && (
               <ActivityIndicator size="small" color="#1DB954" style={styles.bufferingIndicator} />
             )}
+          </RNView>
+
+          <RNView style={styles.settingsContainer}>
+            <RNView style={styles.autoPlayContainer}>
+              <Text style={[styles.autoPlayText, { color: isDark ? '#B3B3B3' : '#666666' }]}>
+                Auto-play next surah
+              </Text>
+              <Switch
+                value={autoPlayEnabled}
+                onValueChange={toggleAutoPlay}
+                trackColor={{ false: isDark ? '#555555' : '#D1D5DB', true: '#1DB954' }}
+                thumbColor={isDark ? '#FFFFFF' : '#FFFFFF'}
+              />
+            </RNView>
           </RNView>
         </>
       )}
@@ -193,12 +240,24 @@ const styles = StyleSheet.create({
   closeButton: {
     padding: 4,
   },
+  navigationContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  navButton: {
+    padding: 8,
+  },
+  disabledButton: {
+    opacity: 0.5,
+  },
+  playButton: {
+    marginHorizontal: 16,
+  },
   controlsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  playButton: {
-    marginRight: 12,
   },
   progressContainer: {
     flex: 1,
@@ -239,4 +298,17 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 12,
   },
+  settingsContainer: {
+    marginTop: 8,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  autoPlayContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  autoPlayText: {
+    fontSize: 12,
+    marginRight: 8,
+  }
 });

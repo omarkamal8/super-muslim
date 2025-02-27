@@ -54,7 +54,8 @@ export default function SurahDetailScreen() {
     playAudio, 
     pauseAudio, 
     currentAudio, 
-    isPlaying 
+    isPlaying,
+    autoPlayEnabled
   } = useAudioPlayer();
 
   // Check if the full surah is currently playing
@@ -242,7 +243,8 @@ export default function SurahDetailScreen() {
     await playAudio(
       fullSurahAudioUrl,
       `${surah.englishName} (${surah.name})`,
-      `Complete Surah • ${surah.numberOfAyahs} Verses`
+      `Complete Surah • ${surah.numberOfAyahs} Verses`,
+      surah.number
     );
   };
 
@@ -400,7 +402,7 @@ export default function SurahDetailScreen() {
       )}
       
       {/* Add padding at the bottom to ensure content isn't hidden behind the sticky player */}
-      {isFullSurahPlaying && <RNView style={{ height: 100 }} />}
+      {isFullSurahPlaying && <RNView style={{ height: 150 }} />}
     </ScrollView>
   );
 }
