@@ -12,6 +12,7 @@ import { Text } from './Themed';
 import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 import { useColorScheme } from 'react-native';
+import { Audio } from 'expo-av';
 
 type StickyAudioPlayerProps = {
   isVisible: boolean;
@@ -35,12 +36,14 @@ export default function StickyAudioPlayer({
   const [position, setPosition] = useState(0);
   const [isBuffering, setIsBuffering] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const slideAnim = React.useRef(new Animated.Value(-100)).current;
+  const slideAnim = React.useRef(new Animated.Value(100)).current;
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
-  // Audio object reference for web
+  // Audio references
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
+  const soundRef = React.useRef<Audio.Sound | null>(null);
+  const positionIntervalRef = React.useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (isVisible) {
@@ -56,7 +59,7 @@ export default function StickyAudioPlayer({
     } else {
       // Slide out animation
       Animated.timing(slideAnim, {
-        toValue: -100,
+        toValue: 100,
         duration: 300,
         useNativeDriver: true
       }).start();
@@ -68,7 +71,7 @@ export default function StickyAudioPlayer({
     return () => {
       cleanupAudio();
     };
-  }, [isVisible]);
+  }, [isVisible, audioUrl]);
 
   const initializeAudio = async () => {
     try {
@@ -77,7 +80,8 @@ export default function StickyAudioPlayer({
 
       if (Platform.OS === 'web') {
         if (!audioRef.current) {
-          const audio = new Audio(audioUrl);
+          const audio = new Audio();
+          audio.src = audioUrl;
           
           audio.onloadedmetadata = () => {
             setDuration(audio.duration * 1000);
@@ -102,6 +106,7 @@ export default function StickyAudioPlayer({
           };
           
           audio.onerror = () => {
+            console.warn('Web audio error:', audio.error);
             setError('Failed to play audio');
             setIsBuffering(false);
           };
@@ -116,14 +121,41 @@ export default function StickyAudioPlayer({
           setIsPlaying(true);
         }
       } else {
-        // For native platforms, you would use Expo AV
-        // This is a placeholder for the actual implementation
-        console.log('Native audio would be initialized here');
-        // Simulate loading
-        setTimeout(() => {
-          setDuration(300000); // 5 minutes in ms
+        // For native platforms, use Expo AV
+        try {
+          if (soundRef.current) {
+            await soundRef.current.unloadAsync();
+          }
+          
+          const { sound, status } = await Audio.Sound.createAsync(
+            { uri: audioUrl },
+            { shouldPlay: true },
+            onPlaybackStatusUpdate
+          );
+          
+          soundRef.current = sound;
+          setIsPlaying(true);
+          
+          // Start a timer to update position for native platforms
+          if (positionIntervalRef.current) {
+            clearInterval(positionIntervalRef.current);
+          }
+          
+          positionIntervalRef.current = setInterval(async () => {
+            if (soundRef.current) {
+              const status = await soundRef.current.getStatusAsync();
+              if (status.isLoaded) {
+                setPosition(status.positionMillis);
+                setDuration(status.durationMillis || 0);
+                setIsBuffering(status.isBuffering);
+              }
+            }
+          }, 1000);
+        } catch (err) {
+          console.warn('Native audio error:', err);
+          setError('Failed to play audio');
           setIsBuffering(false);
-        }, 1500);
+        }
       }
     } catch (err) {
       console.warn('Error initializing audio:', err);
@@ -132,38 +164,84 @@ export default function StickyAudioPlayer({
     }
   };
 
-  const cleanupAudio = () => {
-    if (Platform.OS === 'web' && audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.src = '';
-      audioRef.current = null;
+  const onPlaybackStatusUpdate = (status: any) => {
+    if (status.isLoaded) {
+      setIsBuffering(status.isBuffering);
+      setDuration(status.durationMillis || 0);
+      
+      if (status.didJustFinish) {
+        setIsPlaying(false);
+        setPosition(0);
+      }
+    } else if (status.error) {
+      console.warn('Playback error:', status.error);
+      setError('Playback error occurred');
     }
+  };
+
+  const cleanupAudio = () => {
+    if (Platform.OS === 'web') {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+        audioRef.current = null;
+      }
+    } else {
+      if (soundRef.current) {
+        soundRef.current.unloadAsync().catch(err => {
+          console.warn('Error unloading sound:', err);
+        });
+        soundRef.current = null;
+      }
+      
+      if (positionIntervalRef.current) {
+        clearInterval(positionIntervalRef.current);
+        positionIntervalRef.current = null;
+      }
+    }
+    
     setPosition(0);
     setDuration(0);
     setIsPlaying(false);
     setIsBuffering(false);
+    setError(null);
   };
 
   const togglePlayback = async () => {
-    if (Platform.OS === 'web' && audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-      } else {
-        try {
+    try {
+      if (Platform.OS === 'web' && audioRef.current) {
+        if (isPlaying) {
+          audioRef.current.pause();
+        } else {
           await audioRef.current.play();
-        } catch (err) {
-          console.warn('Error playing audio:', err);
-          setError('Failed to play audio');
         }
+        setIsPlaying(!isPlaying);
+      } else if (soundRef.current) {
+        if (isPlaying) {
+          await soundRef.current.pauseAsync();
+        } else {
+          await soundRef.current.playAsync();
+        }
+        setIsPlaying(!isPlaying);
       }
-      setIsPlaying(!isPlaying);
+    } catch (err) {
+      console.warn('Error toggling playback:', err);
+      setError('Failed to control playback');
     }
   };
 
   const onSliderValueChange = (value: number) => {
-    if (Platform.OS === 'web' && audioRef.current && duration > 0) {
-      const newPosition = value * duration;
+    if (duration <= 0) return;
+    
+    const newPosition = value * duration;
+    
+    if (Platform.OS === 'web' && audioRef.current) {
       audioRef.current.currentTime = newPosition / 1000;
+      setPosition(newPosition);
+    } else if (soundRef.current) {
+      soundRef.current.setPositionAsync(newPosition).catch(err => {
+        console.warn('Error setting position:', err);
+      });
       setPosition(newPosition);
     }
   };
@@ -238,7 +316,7 @@ export default function StickyAudioPlayer({
                 minimumTrackTintColor="#1DB954"
                 maximumTrackTintColor={isDark ? '#555555' : '#D1D5DB'}
                 thumbTintColor="#1DB954"
-                disabled={isBuffering}
+                disabled={isBuffering || duration <= 0}
               />
               <View style={styles.timeContainer}>
                 <Text style={[styles.timeText, { color: isDark ? '#B3B3B3' : '#666666' }]}>
