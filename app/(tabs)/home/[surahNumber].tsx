@@ -1,5 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Image, Platform, useColorScheme } from 'react-native';
+import {
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Image,
+  Platform,
+  useColorScheme
+} from 'react-native';
 import { View, Text } from '../../../components/Themed';
 import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -94,7 +102,11 @@ export default function SurahDetailScreen() {
         transliterationResponse.json()
       ]);
 
-      if (textData.code === 200 && translationData.code === 200 && transliterationData.code === 200) {
+      if (
+        textData.code === 200 &&
+        translationData.code === 200 &&
+        transliterationData.code === 200
+      ) {
         const verses = textData.data.ayahs.map((ayah: any, index: number) => ({
           number: ayah.numberInSurah,
           text: ayah.text,
@@ -130,17 +142,14 @@ export default function SurahDetailScreen() {
       if (Platform.OS === 'web') {
         const audio = new Audio();
         audio.src = verse.audio;
-        
         audio.onerror = () => {
           console.warn('Web audio error:', audio.error);
           setAudioError('Failed to play audio. Please try again.');
           setPlayingVerse(null);
         };
-        
         audio.onended = () => {
           setPlayingVerse(null);
         };
-
         audio.oncanplaythrough = async () => {
           try {
             await audio.play();
@@ -152,7 +161,6 @@ export default function SurahDetailScreen() {
             setPlayingVerse(null);
           }
         };
-
         audio.load();
       } else {
         const { sound: newSound } = await Audio.Sound.createAsync(
@@ -168,7 +176,6 @@ export default function SurahDetailScreen() {
             }
           }
         );
-
         setSound(newSound);
         setPlayingVerse(verse.number);
       }
@@ -279,6 +286,11 @@ export default function SurahDetailScreen() {
     }
   };
 
+  // Toggle Arabic Only mode
+  const toggleArabicOnly = () => {
+    setShowArabicOnly((prev) => !prev);
+  };
+
   if (loading) {
     return (
       <View style={[styles.container, { backgroundColor: isDark ? '#121212' : '#FFFFFF' }]}>
@@ -294,6 +306,11 @@ export default function SurahDetailScreen() {
       </View>
     );
   }
+
+  // Build a continuous Arabic text string, removing any inherent newlines
+  const arabicOnlyText = surah.verses
+    .map((verse) => `${verse.text.replace(/\n/g, ' ')} (${verse.number})`)
+    .join(' ');
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: isDark ? '#121212' : '#FFFFFF' }]}>
@@ -331,8 +348,11 @@ export default function SurahDetailScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={() => setShowArabicOnly(!showArabicOnly)}
-          style={[styles.controlButton, { backgroundColor: showArabicOnly ? '#1DB954' : isDark ? '#383838' : '#EEEEEE' }]}
+          onPress={toggleArabicOnly}
+          style={[
+            styles.controlButton,
+            { backgroundColor: showArabicOnly ? '#1DB954' : isDark ? '#383838' : '#EEEEEE' }
+          ]}
         >
           <Ionicons
             name={showArabicOnly ? 'text' : 'text-outline'}
@@ -351,54 +371,52 @@ export default function SurahDetailScreen() {
         </View>
       )}
 
-      <View style={styles.versesContainer}>
-        {surah.verses.map((verse) => (
-          <View
-            key={verse.number}
-            style={[
-              styles.verseCard,
-              { backgroundColor: isDark ? '#282828' : '#F8F8F8' }
-            ]}
-          >
-            <View style={styles.verseHeader}>
-              <View style={[styles.verseNumber, { backgroundColor: '#1DB954' }]}>
-                <Text style={styles.numberText}>{verse.number}</Text>
+      {showArabicOnly ? (
+        <View style={styles.arabicOnlyContainer}>
+          <Text style={[styles.arabicOnlyText, { color: isDark ? '#FFFFFF' : '#1A1A1A' }]}>
+            {arabicOnlyText}
+          </Text>
+        </View>
+      ) : (
+        <View style={styles.versesContainer}>
+          {surah.verses.map((verse) => (
+            <View
+              key={verse.number}
+              style={[
+                styles.verseCard,
+                { backgroundColor: isDark ? '#282828' : '#F8F8F8' }
+              ]}
+            >
+              <View style={styles.verseHeader}>
+                <View style={[styles.verseNumber, { backgroundColor: '#1DB954' }]}>
+                  <Text style={styles.numberText}>{verse.number}</Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => toggleAudio(verse)}
+                  style={styles.audioButton}
+                >
+                  <Ionicons
+                    name={playingVerse === verse.number ? 'pause' : 'play'}
+                    size={24}
+                    color="#1DB954"
+                  />
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity
-                onPress={() => toggleAudio(verse)}
-                style={styles.audioButton}
-              >
-                <Ionicons
-                  name={playingVerse === verse.number ? 'pause' : 'play'}
-                  size={24}
-                  color="#1DB954"
-                />
-              </TouchableOpacity>
-            </View>
-            
-            <Text style={[
-              styles.arabicText,
-              { color: isDark ? '#FFFFFF' : '#1A1A1A' }
-            ]}>
-              {verse.text}
-            </Text>
+              
+              <Text style={[styles.arabicText, { color: isDark ? '#FFFFFF' : '#1A1A1A' }]}>
+                {verse.text}
+              </Text>
 
-            {!showArabicOnly && (
-              <>
-                <Text style={styles.transliterationText}>
-                  {verse.transliteration}
-                </Text>
-                <Text style={[
-                  styles.translationText,
-                  { color: isDark ? '#B3B3B3' : '#666666' }
-                ]}>
-                  {verse.translation}
-                </Text>
-              </>
-            )}
-          </View>
-        ))}
-      </View>
+              <Text style={styles.transliterationText}>
+                {verse.transliteration}
+              </Text>
+              <Text style={[styles.translationText, { color: isDark ? '#B3B3B3' : '#666666' }]}>
+                {verse.translation}
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -408,7 +426,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    height: 200,
+    height: 280,
     width: '100%',
     position: 'relative',
   },
@@ -432,6 +450,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 8,
+    marginTop: 20,
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
@@ -487,10 +506,7 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
@@ -538,5 +554,14 @@ const styles = StyleSheet.create({
     color: '#FF4444',
     textAlign: 'center',
     margin: 20,
+  },
+  arabicOnlyContainer: {
+    padding: 16,
+  },
+  arabicOnlyText: {
+    fontSize: 24,
+    lineHeight: 48,
+    textAlign: 'justify', // Justify text to stretch from left to right
+    fontFamily: 'System',
   },
 });

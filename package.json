@@ -10,7 +10,7 @@
     "web": "expo start --web",
     "build:web": "expo export --platform web",
     "build:android": "eas build --platform android --profile production",
-    "build:ios": "eas build --platform ios --profile production",
+    "build:ios": "eas build --local --profile development-simulator -p ios",
     "build:all": "npm run build:web && npm run build:android && npm run build:ios",
     "preview:web": "npx serve dist/",
     "preview:android": "expo start --android --release-channel production",
