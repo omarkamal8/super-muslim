@@ -1,9 +1,9 @@
-import { useState } from 'react';
 import { StyleSheet, FlatList, TouchableOpacity, Image, useColorScheme } from 'react-native';
 import { View, Text } from '../../../components/Themed';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { azkarData } from '../../../data/azkarData';
 
 type AzkarCategory = {
   id: string;
@@ -14,72 +14,34 @@ type AzkarCategory = {
   count: number;
 };
 
-const azkarCategories: AzkarCategory[] = [
-  {
-    id: 'morning',
-    title: 'Morning Azkar',
-    arabicTitle: 'أذكار الصباح',
-    description: 'Remembrance after Fajr prayer',
-    icon: 'sunny',
-    count: 30,
-  },
-  {
-    id: 'evening',
-    title: 'Evening Azkar',
-    arabicTitle: 'أذكار المساء',
-    description: 'Remembrance after Asr prayer',
-    icon: 'moon',
-    count: 30,
-  },
-  {
-    id: 'sleep',
-    title: 'Sleep Azkar',
-    arabicTitle: 'أذكار النوم',
-    description: 'Remembrance before sleeping',
-    icon: 'bed',
-    count: 15,
-  },
-  {
-    id: 'wake',
-    title: 'Wake Up Azkar',
-    arabicTitle: 'أذكار الاستيقاظ',
-    description: 'Remembrance upon waking',
-    icon: 'alarm',
-    count: 8,
-  },
-  {
-    id: 'prayer',
-    title: 'Prayer Azkar',
-    arabicTitle: 'أذكار الصلاة',
-    description: 'Remembrance after prayers',
-    icon: 'pray',
-    count: 20,
-  },
-  {
-    id: 'mosque',
-    title: 'Mosque Azkar',
-    arabicTitle: 'أذكار المسجد',
-    description: 'Entering and leaving mosque',
-    icon: 'business',
-    count: 10,
-  },
-  {
-    id: 'food',
-    title: 'Food Azkar',
-    arabicTitle: 'أذكار الطعام',
-    description: 'Before and after eating',
-    icon: 'restaurant',
-    count: 6,
-  },
-  {
-    id: 'travel',
-    title: 'Travel Azkar',
-    arabicTitle: 'أذكار السفر',
-    description: 'Remembrance during travel',
-    icon: 'airplane',
-    count: 12,
-  },
-];
+// Create a list of categories from the azkarData
+const azkarCategories: AzkarCategory[] = Object.entries(azkarData).map(([id, data]) => ({
+  id,
+  title: data.title,
+  arabicTitle: data.arabicTitle,
+  description: data.description,
+  // Map category IDs to appropriate icons
+  icon: mapCategoryToIcon(id),
+  count: data.items.length,
+}));
+
+// Helper function to map category IDs to appropriate icons
+function mapCategoryToIcon(categoryId: string): keyof typeof Ionicons.glyphMap {
+  const iconMap: Record<string, keyof typeof Ionicons.glyphMap> = {
+    morning: 'sunny',
+    evening: 'moon',
+    sleep: 'bed',
+    wake: 'alarm',
+    prayer: 'pray',
+    mosque: 'business',
+    food: 'restaurant',
+    travel: 'airplane',
+    distress: 'heart-dislike',
+    forgiveness: 'heart',
+  };
+  
+  return iconMap[categoryId] || 'bookmark';
+}
 
 export default function AzkarScreen() {
   const router = useRouter();
