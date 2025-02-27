@@ -47,6 +47,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   const [autoPlayEnabled, setAutoPlayEnabled] = useState(false);
   const [isFirstSurah, setIsFirstSurah] = useState(false);
   const [isLastSurah, setIsLastSurah] = useState(false);
+  const [shouldAutoPlayNext, setShouldAutoPlayNext] = useState(false);
 
   // Audio references
   const webAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -75,6 +76,24 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     }
   }, [currentAudio]);
 
+  // Handle auto-play next surah when audio finishes
+  useEffect(() => {
+    if (shouldAutoPlayNext && autoPlayEnabled && currentAudio?.surahNumber && !isPlaying && position === 0 && duration > 0) {
+      // Reset the flag
+      setShouldAutoPlayNext(false);
+      
+      // Only auto-play if not the last surah
+      if (currentAudio.surahNumber < TOTAL_SURAHS) {
+        // Add a small delay to ensure everything is cleaned up properly
+        const timer = setTimeout(() => {
+          playNextSurah();
+        }, 500);
+        
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [shouldAutoPlayNext, autoPlayEnabled, currentAudio, isPlaying, position, duration]);
+
   const initializeAudioMode = async () => {
     try {
       await Audio.setAudioModeAsync({
@@ -98,9 +117,9 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         setIsPlaying(false);
         setPosition(0);
         
-        // Auto-play next surah if enabled
+        // Set flag to trigger auto-play in the useEffect
         if (autoPlayEnabled && currentAudio?.surahNumber && currentAudio.surahNumber < TOTAL_SURAHS) {
-          playNextSurah();
+          setShouldAutoPlayNext(true);
         }
       }
     } else if (status.error) {
@@ -117,6 +136,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       setIsBuffering(true);
       setError(null);
       setCurrentAudio({ url, title, subtitle, surahNumber });
+      setShouldAutoPlayNext(false);
 
       if (Platform.OS === 'web') {
         const audio = new Audio();
@@ -135,9 +155,9 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
           setIsPlaying(false);
           setPosition(0);
           
-          // Auto-play next surah if enabled
+          // Set flag to trigger auto-play in the useEffect
           if (autoPlayEnabled && surahNumber && surahNumber < TOTAL_SURAHS) {
-            playNextSurah();
+            setShouldAutoPlayNext(true);
           }
         };
         
@@ -364,6 +384,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       setIsPlaying(false);
       setIsBuffering(false);
       setError(null);
+      setShouldAutoPlayNext(false);
     } catch (err) {
       console.warn('Error cleaning up audio:', err);
     }
