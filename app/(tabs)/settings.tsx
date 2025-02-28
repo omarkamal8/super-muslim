@@ -264,7 +264,7 @@ export default function SettingsScreen() {
                 <Ionicons name="information-circle" size={24} color="#FFFFFF" />
               </RNView>
               <RNView style={styles.settingTextContainer}>
-                <Text style={[styles.settingText, { color: isDark ? '#FFFFFF' : '#1A1A1A' }]}>About Super Muslim</Text>
+                <Text style={[styles.settingText, { color: isDark ? '#FFFFFF' : '#1A1A1A' }]}>About Yaqeen</Text>
                 <Text style={styles.settingDescription}>Learn more about the app</Text>
               </RNView>
             </RNView>
@@ -278,7 +278,7 @@ export default function SettingsScreen() {
               </RNView>
               <RNView style={styles.settingTextContainer}>
                 <Text style={[styles.settingText, { color: isDark ? '#FFFFFF' : '#1A1A1A' }]}>Rate the App</Text>
-                <Text style={styles.settingDescription}>If you enjoy using Super Muslim, please rate it</Text>
+                <Text style={styles.settingDescription}>If you enjoy using Yaqeen, please rate it</Text>
               </RNView>
             </RNView>
             <Ionicons name="chevron-forward" size={20} color={isDark ? '#B3B3B3' : '#666666'} />

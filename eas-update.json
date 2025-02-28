@@ -1,0 +1,17 @@
+{
+  "cli": {
+    "version": ">= 15.0.0",
+    "requireCommit": true
+  },
+  "updates": {
+    "development": {
+      "channel": "development"
+    },
+    "preview": {
+      "channel": "preview"
+    },
+    "production": {
+      "channel": "production"
+    }
+  }
+}

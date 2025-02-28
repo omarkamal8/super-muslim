@@ -1,21 +1,81 @@
 {
   "cli": {
-    "version": ">= 5.9.0"
+    "version": ">= 15.0.0",
+    "requireCommit": true,
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "channel": "development",
       "ios": {
-        "simulator": true
+        "simulator": true,
+        "resourceClass": "m-medium"
+      },
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleDebug"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.example.dev"
+      },
+      "cache": {
+        "key": "development-v1"
       }
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "channel": "preview",
+      "ios": {
+        "resourceClass": "m-medium"
+      },
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.example.staging"
+      },
+      "cache": {
+        "key": "preview-v1"
+      }
     },
-    "production": {}
+    "production": {
+      "autoIncrement": true,
+      "channel": "production",
+      "ios": {
+        "resourceClass": "m-medium"
+      },
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.example.com"
+      },
+      "cache": {
+        "key": "production-v1"
+      }
+    }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "appleId": "omar.wp.kamal@gmail.com",
+        "ascAppId": "6742658035",
+        "appleTeamId": "AU37X2D4X5"
+      },
+      "android": {
+        "serviceAccountKeyPath": "path/to/service-account.json",
+        "track": "production"
+      }
+    }
+  },
+  "updates": {
+    "url": "https://u.expo.dev/5f9b5641-bafb-4c6e-a49e-0fabf772e248",
+    "codeSigningCertificate": null,
+    "codeSigningMetadata": {
+      "alg": "rsa-v1_5-sha256",
+      "keyid": "main"
+    }
   }
 }
